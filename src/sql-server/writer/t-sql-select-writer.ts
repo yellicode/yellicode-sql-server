@@ -1,7 +1,7 @@
 import * as elements from '@yellicode/elements';
 import { TextWriter } from "@yellicode/templating";
 import * as opts from '../options';
-import { TSqlSelectSpecificationBuilder } from './t-sql-select-specification-builder';
+import { TSqlResultSetBuilder } from './t-sql-select-specification-builder';
 import { SqlServerTable, SqlServerColumn } from '../model/sql-server-database';
 import { SqlServerObjectNameProvider } from '../providers/sql-server-object-name-provider';
 import { TSqlWriterBase } from './t-sql-writer-base';
@@ -16,20 +16,22 @@ export class TSqlSelectWriter extends TSqlWriterBase {
         parameterFilter?: (value: SqlServerColumn) => boolean,
         selectColumnsFilter?: (value: SqlServerColumn) => boolean) {       
 
-        const specificationBuilder = new TSqlSelectSpecificationBuilder(this.objectNameProvider, this.logger);
-        const specifications = specificationBuilder.build(table, selectColumnsFilter);
+        const specificationBuilder = new TSqlResultSetBuilder(this.objectNameProvider, this.logger);
+        const resultSets = specificationBuilder.build(table, selectColumnsFilter);
         const ownTableName = table.name;
+        const columns = resultSets[0].columns;
 
         // SELECT 
         this.writeLine('SELECT')
         this.increaseIndent();
-        specifications.forEach((spec, index) => {
+        columns.forEach((col, index) => {
+            const selection = col.sourceTable ? `[${col.sourceTable}].[${col.sourceColumn}]`: `[${col.sourceColumn}]`;
             this.writeIndent();
-            this.write(spec.selection);
-            if (spec.alias) {                
-                this.write(` AS ${spec.alias}`);
+            this.write(selection);
+            if (col.alias) {                
+                this.write(` AS ${col.alias}`);
             }
-            if (index < specifications.length - 1) this.write(',');
+            if (index < resultSets.length - 1) this.write(',');
             // this.write(`-- ${spec.alias || spec.columnName}`);            
             this.writeEndOfLine();
         })

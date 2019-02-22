@@ -1,38 +1,38 @@
-import { SqlSelectSpecification } from '../../relational/model/database';
+import { SqlResultSet, SqlResultSetColumn } from '../../relational/model/database';
 import { SqlServerObjectNameProvider } from '../providers/sql-server-object-name-provider';
 import { SqlServerTable, SqlServerColumn } from '../model/sql-server-database';
 import { Logger } from '@yellicode/core';
 
-export class TSqlSelectSpecificationBuilder {
+export class TSqlResultSetBuilder {
 
     constructor(private objectNameProvider: SqlServerObjectNameProvider, private logger: Logger) {
 
     }
 
-    private getSqlSelectSpecification(tableName: string, column: SqlServerColumn, parentColumn: SqlServerColumn | null): SqlSelectSpecification {
-
-        const columnName = column.name;
-        let selection = `[${tableName}].[${columnName}]`;
+    private buildSqlResultSet(tableName: string, column: SqlServerColumn, parentColumn: SqlServerColumn | null): SqlResultSet {
+        const columnName = column.name;      
 
         const isJoined = parentColumn !== null;
-        const specification: SqlSelectSpecification = {
-            selection: selection,
+        const resultSetColumn: SqlResultSetColumn = {
             alias: isJoined ? this.objectNameProvider.getColumnAlias(tableName, columnName) : null,
-            columnName: columnName,
+            sourceTable: tableName,
+            sourceColumn: columnName,
+            parentColumn: parentColumn ? parentColumn.name : null,
             isJoined: isJoined,
             isForeignKey: column.isForeignKey,
-            parentColumn: parentColumn
+            isNullable: column.isNullable,
+            typeName: column.typeName
             // property: property,
             // entityType: property.owner as elements.Type,
             // parentProperty: parentProperty 
         };
 
         // specification.isGeneratedIdentity = false;
-        return specification;
+        return {columns: [resultSetColumn]};
     }
 
-    public build(table: SqlServerTable, selectColumnsFilter?: (value: SqlServerColumn) => boolean): SqlSelectSpecification[] {
-        const specifications: SqlSelectSpecification[] = [];        
+    public build(table: SqlServerTable, selectColumnsFilter?: (value: SqlServerColumn) => boolean): SqlResultSet[] {
+        const specifications: SqlResultSet[] = [];        
 
         // 1) Select own properties
         table.ownColumns.forEach(ownColumn => {
@@ -43,7 +43,7 @@ export class TSqlSelectSpecificationBuilder {
             if (!ownColumn.isNavigableInModel) 
                 return; 
 
-            specifications.push(this.getSqlSelectSpecification(table.name, ownColumn, null));
+            specifications.push(this.buildSqlResultSet(table.name, ownColumn, null));
         });
 
         table.dependentColumns.forEach(dependentColumn => {
@@ -69,7 +69,7 @@ export class TSqlSelectSpecificationBuilder {
                 //     return;
                 // }
 
-                specifications.push(this.getSqlSelectSpecification(tableNameOrAlias, column, dependentColumn));
+                specifications.push(this.buildSqlResultSet(tableNameOrAlias, column, dependentColumn));
             });
         });
         

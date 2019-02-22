@@ -2,8 +2,8 @@ import { TextWriter } from "@yellicode/templating";
 import { SqlServerStoredProcedure, SqlServerParameter, SqlServerTable, QueryType, SqlServerColumn } from '../model/sql-server-database';
 import { SqlServerObjectNameProvider } from '../providers/sql-server-object-name-provider';
 import { TSqlWriterBase } from './t-sql-writer-base';
-import { SqlParameterDirection, SqlSelectSpecification } from '../../relational/model/database';
-import { TSqlSelectSpecificationBuilder } from './t-sql-select-specification-builder';
+import { SqlParameterDirection, SqlResultSet, SqlResultSetColumn } from '../../relational/model/database';
+import { TSqlResultSetBuilder } from './t-sql-select-specification-builder';
 import { Logger } from '@yellicode/core';
 
 export class StoredProcedureWriter extends TSqlWriterBase {
@@ -16,13 +16,18 @@ export class StoredProcedureWriter extends TSqlWriterBase {
         this.writeLine('WHERE');
         this.increaseIndent();
         parameters.forEach((param, index) => {
-            const colName = param.name;
-            const table = param.sourceColumn.table;
+            const paramName = param.name;
+            const tableName = param.tableName;
+            if (!tableName) {
+                this.logger.warn(`Cannot write WHERE clause for parameter '${paramName}' because the table is unknown.`);
+                return;
+            }
+            // const table = param.sourceColumn.table;
             this.writeIndent();
             if (param.isNullable) {
-                this.write(`[${table.name}].[${colName}] = ISNULL(@${param.name}, [${table.name}].[${param.name}])`);
+                this.write(`[${tableName}].[${param.columnName}] = ISNULL(${param.name}, [${tableName}].[${param.columnName}])`);
             }
-            else this.write(`[${table.name}].[${colName}] = @${param.name}`);
+            else this.write(`[${tableName}].[${param.columnName}] = ${param.name}`);
             if (index < parameters.length - 1) {
                 this.write(' AND'); // TODO: AND/OR option 
             }
@@ -37,14 +42,18 @@ export class StoredProcedureWriter extends TSqlWriterBase {
         let idParameter: SqlServerParameter | null = null;
 
         parameters.forEach(p => {
-            if (p.sourceColumn.isIdentity) {
+            if (!p.columnName){
+                this.logger.warn(`Cannot write INSERT clause for parameter '${p.name}' because the column name is unknown.`);
+                return;
+            }
+            if (p.isIdentity) {
                 idParameter = p;
             }
             if (p.direction === SqlParameterDirection.Output || p.direction === SqlParameterDirection.ReturnValue)
                 return;
 
             parameterNames.push(`@${p.name}`);
-            columnNames.push(p.sourceColumn.name);
+            columnNames.push(p.columnName); 
         });
 
         this.writeLine(`INSERT INTO`);
@@ -87,9 +96,12 @@ export class StoredProcedureWriter extends TSqlWriterBase {
             this.writeLine('SET');
             this.increaseIndent();
             setParameters.forEach((param, index) => {
-                const colName = param.sourceColumn.name;
+                if (!param.columnName) {
+                    this.logger.warn(`Cannot write UPDATE clause for parameter '${param.name}' because the column name is unknown.`);
+                    return;
+                }              
                 this.writeIndent();
-                this.write(`[${colName}] = @${param.name}`);
+                this.write(`[${param.columnName}] = @${param.name}`);
                 if (index < setParameters.length - 1) this.write(',');
                 this.writeEndOfLine();
             });
@@ -99,19 +111,21 @@ export class StoredProcedureWriter extends TSqlWriterBase {
         this.writeWhereStatement(filterParameters);
     }
 
-    private writeSelectQuery(table: SqlServerTable, parameters: SqlServerParameter[], selection: SqlSelectSpecification[]): void {
+    private writeSelectQuery(table: SqlServerTable, parameters: SqlServerParameter[], resultSet: SqlResultSet): void {
         const filterParameters: SqlServerParameter[] = parameters.filter(p => p.isFilter);
-
+        
+        const columns = resultSet.columns;
         // SELECT 
         this.writeLine('SELECT')
         this.increaseIndent();
-        selection.forEach((spec, index) => {
+        columns.forEach((col, index) => {
+            const selection = col.sourceTable ? `[${col.sourceTable}].[${col.sourceColumn}]`: `[${col.sourceColumn}]`;
             this.writeIndent();
-            this.write(spec.selection);
-            if (spec.alias) {
-                this.write(` AS ${spec.alias}`);
+            this.write(selection);
+            if (col.alias) {
+                this.write(` AS ${col.alias}`);
             }
-            if (index < selection.length - 1) this.write(',');
+            if (index < columns.length - 1) this.write(',');
             this.writeEndOfLine();
         })
         this.decreaseIndent();
@@ -168,7 +182,7 @@ export class StoredProcedureWriter extends TSqlWriterBase {
             return;
         }
 
-        const idParameter = parameters.find(p => p.sourceColumn.isIdentity);
+        const idParameter = parameters.find(p => p.isIdentity);
         if (!idParameter) {
             this.logger.error(`Cannot write query to update '${dependentTable.name}.${dependentColumn.name}'. Unable to determine the identity parameter.`);
             return;
@@ -179,7 +193,7 @@ export class StoredProcedureWriter extends TSqlWriterBase {
             this.logger.error(`Cannot write query to update '${dependentTable.name}.${dependentColumn.name}'. Unable to determine the values parameter.`);
             return;
         }
-        const tableType = valuesParameter.tableType;
+        const tableType = valuesParameter .tableType;
         if (!tableType || tableType.ownColumns.length === 0){
             this.logger.error(`Cannot write query to update '${dependentTable.name}.${dependentColumn.name}'. The values parameter is table valued but does not have a valid tableType.`);
             return;
@@ -194,7 +208,12 @@ export class StoredProcedureWriter extends TSqlWriterBase {
         this.writeLine(`UPDATE [${dependentTable.name}] SET [${dependentColumn.name}] = @${idParameter.name} WHERE [${dependentIdentity.name}] IN (SELECT [${valueColumn.name}] FROM @${valuesParameter.name})`);
     }
 
-     public writeStoredProcedure(procedure: SqlServerStoredProcedure): void {
+    public writeStoredProcedure(procedure: SqlServerStoredProcedure): void {
+        const relatedTable = procedure.relatedTable;
+        if (!relatedTable) {
+            throw `Cannot generate stored procedure ${procedure.name} because the related table is unknown.`;
+        }
+
         this.writeLine(`CREATE PROCEDURE [${procedure.name}]`);
         this.writeCodeBlock(() => {
           //  this.logger.info(`Procedure ${procedure.name} has ${procedure.parameters.length} parameters.`)
@@ -205,23 +224,23 @@ export class StoredProcedureWriter extends TSqlWriterBase {
             this.writeSetNoCount();
             switch (procedure.queryType) {
                 case QueryType.Insert:
-                    this.writeInsertQuery(procedure.table, procedure.parameters);
+                    this.writeInsertQuery(relatedTable, procedure.parameters);
                     break;
                 case QueryType.Update:
-                    this.writeUpdateQuery(procedure.table, procedure.parameters);
+                    this.writeUpdateQuery(relatedTable, procedure.parameters);
                     break;
                 case QueryType.UpdateRelationship:
                     this.writeUpdateRelationshipQuery(procedure.dependentColumn!, procedure.parameters);
                     break;
                 case QueryType.Delete:
-                    this.writeDeleteQuery(procedure.table, procedure.parameters);
+                    this.writeDeleteQuery(relatedTable, procedure.parameters);
                     break;              
                 case QueryType.SelectSingle:
-                    if (procedure.selection) {
-                        this.writeSelectQuery(procedure.table, procedure.parameters, procedure.selection);
+                    if (procedure.resultSets && procedure.resultSets.length) {
+                        this.writeSelectQuery(relatedTable, procedure.parameters, procedure.resultSets[0]);
                     }
                     else {
-                        this.logger.warn(`Skipping code for stored procedure '${procedure.name}'. There are no columns to select.`);
+                        this.logger.warn(`Skipping code for stored procedure '${procedure.name}'. There are no result sets.`);
                     }
                     break;
                 default:

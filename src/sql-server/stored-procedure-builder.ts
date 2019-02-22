@@ -1,9 +1,9 @@
-import { SqlServerParameter, SqlServerStoredProcedure, SqlServerTable, SqlServerColumn, QueryType } from './model/sql-server-database';
+import { SqlServerParameter, SqlServerStoredProcedure, SqlServerTable, SqlServerColumn, QueryType, SqlServerQuery } from './model/sql-server-database';
 import { SqlServerObjectNameProvider } from './providers/sql-server-object-name-provider';
 import { ParameterOptions, ParameterIncludes } from './options';
 import * as elements from '@yellicode/elements';
 import { Column, SqlParameterDirection, SqlParameter } from '../relational/model/database';
-import { TSqlSelectSpecificationBuilder } from './writer/t-sql-select-specification-builder';
+import { TSqlResultSetBuilder } from './writer/t-sql-select-specification-builder';
 import { Logger } from '@yellicode/core';
 
 export class StoredProcedureBuilder {
@@ -32,10 +32,10 @@ export class StoredProcedureBuilder {
         const parameterOptions: ParameterOptions = { includes: ParameterIncludes.IdentityAndOther, useIdentityAsOutput: true };
         const parameters = this.buildParameters(table, parameterOptions);
         const procedure: SqlServerStoredProcedure = {
-            sourceType: type,
+            modelType: type,
             queryType: QueryType.Insert,
             name: '',
-            table: table,
+            relatedTable: table,
             parameters: parameters
         };
         procedure.name = this.objectNameProvider.getStoredProcNameForQuery(procedure);
@@ -50,10 +50,10 @@ export class StoredProcedureBuilder {
         const parameters = this.buildParameters(table, parameterOptions);
         
         const procedure: SqlServerStoredProcedure = {
-            sourceType: type,
+            modelType: type,
             queryType: QueryType.Update,
             name: '',
-            table: table,
+            relatedTable: table,
             parameters: parameters
         };
         procedure.name = this.objectNameProvider.getStoredProcNameForQuery(procedure);
@@ -67,11 +67,11 @@ export class StoredProcedureBuilder {
         const parameterOptions = { includes: ParameterIncludes.Identity, useIdentityAsFilter: true };
         const parameters = this.buildParameters(table, parameterOptions);
         
-        const procedure = {
-            sourceType: type,
+        const procedure: SqlServerStoredProcedure = {
+            modelType: type,
             queryType: QueryType.Delete,
-            name: '',
-            table: table,
+            name: '', // created below using objectNameProvider
+            relatedTable: table,
             parameters: parameters
         }
         procedure.name = this.objectNameProvider.getStoredProcNameForQuery(procedure);
@@ -82,15 +82,15 @@ export class StoredProcedureBuilder {
         const parameterOptions = { includes: ParameterIncludes.Identity, useIdentityAsFilter: true };
         const parameters = this.buildParameters(table, parameterOptions);
 
-        const specificationBuilder = new TSqlSelectSpecificationBuilder(this.objectNameProvider, this.logger);
+        const specificationBuilder = new TSqlResultSetBuilder(this.objectNameProvider, this.logger);
         const selection = specificationBuilder.build(table);
-        const procedure = {
-            sourceType: type,
+        const procedure: SqlServerStoredProcedure = {
+            modelType: type,
             queryType: QueryType.SelectSingle,
             name: '',
-            table: table,
+            relatedTable: table,
             parameters: parameters,
-            selection: selection
+            resultSets: selection
         };
         procedure.name = this.objectNameProvider.getStoredProcNameForQuery(procedure);
        // this.logger.info(`buildSelectById: Procedure ${procedure.name} has ${procedure.parameters.length} parameters.`)
@@ -124,10 +124,10 @@ export class StoredProcedureBuilder {
         // console.log(`Param name: ${parameterName}. Param type: ${sqlTypeName}`);
 
         const procedure: SqlServerStoredProcedure = {
-            sourceType: table.sourceType!,
+            modelType: table.sourceType!,
             queryType: QueryType.UpdateRelationship,
             name: '',
-            table: table,
+            relatedTable: table,
             parameters: parameters,
             dependentColumn: dependentColumn
         }
@@ -145,14 +145,19 @@ export class StoredProcedureBuilder {
     private buildIdListParameter(relatedColumn: SqlServerColumn): SqlServerParameter {
         const identityType = this.identityTableType.sourceType!;
         
+        const tableTypeName = this.objectNameProvider.getSimpleTableTypeName(identityType, relatedColumn.typeName)
         return {
             name: this.objectNameProvider.getParameterName(relatedColumn.name, true),
-            typeName: this.objectNameProvider.getSimpleTableTypeName(identityType, relatedColumn.typeName),
-            sourceColumn: relatedColumn,
+            tableType: this.identityTableType,            
+            typeName: tableTypeName,            
+            tableName: null,
+            columnName: relatedColumn.name,
+            modelTypeName: identityType.name,
+            modelProperty: null,            
             direction: SqlParameterDirection.Input,
             isTableValued: true,
             isMultiValued: true,
-            tableType: this.identityTableType,
+            isIdentity: false,
             isNullable: false,
             isReadOnly: true, // important
             length: null,
@@ -163,7 +168,10 @@ export class StoredProcedureBuilder {
     }
 
     protected buildAndAddSubProcedures(procedure: SqlServerStoredProcedure): void {     
-        const table = procedure.table;
+        const table = procedure.relatedTable;
+        if (!table) 
+            return; // todo: log this
+
         table.dependentColumns.forEach(col => {
             this.buildUpdateRelationShipById(table, col);                    
         })
@@ -171,11 +179,14 @@ export class StoredProcedureBuilder {
 
     private buildIdParameter(table: SqlServerTable): SqlServerParameter | null {
         const idColumn = table.ownColumns.find(c => c.isIdentity);
-        if (!idColumn) return null;
-
-        return {
-            name: this.objectNameProvider.getParameterName(idColumn.name, false),
-            sourceColumn: idColumn,
+        if (!idColumn || !idColumn.modelProperty) return null;
+        const p: SqlServerParameter = 
+         {
+            name: this.objectNameProvider.getParameterName(idColumn.name, false),            
+            modelProperty: idColumn.modelProperty,
+            modelTypeName: idColumn.modelProperty.type!.getQualifiedName(),
+            tableName: table.name,      
+            columnName: idColumn.name,
             isNullable: false,
             isReadOnly: false,
             typeName: idColumn.typeName,
@@ -183,11 +194,13 @@ export class StoredProcedureBuilder {
             precision: idColumn.precision,
             scale: idColumn.scale,
             direction: SqlParameterDirection.Input,
+            isIdentity: true,
             isFilter: false,
             isTableValued: false,
             isMultiValued: false,
-            tableType: null
+            tableType: null            
         }        
+        return p;
     }
 
   
@@ -206,12 +219,23 @@ export class StoredProcedureBuilder {
                 return; 
             }
 
+            const modelProperty = ownColumn.modelProperty;
+            if (!modelProperty || !modelProperty.type){
+                this.logger.warn(`Not creating parameter for column '${table.name}.${ownColumn.name}' because the property type is unknown.`);
+                return;
+            }
+
             const isOutput = ownColumn.isIdentity && options.useIdentityAsOutput ? true: false;
             const isFilter = ownColumn.isIdentity && options.useIdentityAsFilter ? true: false;
+
             const ownParameter: SqlServerParameter = {
-                name: this.objectNameProvider.getParameterName(ownColumn.name, false),
-                sourceColumn: ownColumn,
-                isNullable: options.allowNulls || !ownColumn.isRequired,
+                name: this.objectNameProvider.getParameterName(ownColumn.name, false),                
+                tableName: ownColumn.table.name, 
+                columnName: ownColumn.name,
+                modelTypeName: modelProperty.type.getQualifiedName(),
+                modelProperty: modelProperty,
+                isIdentity: ownColumn.isIdentity,
+                isNullable: options.allowNulls || !ownColumn.isNullable,
                 isReadOnly: false,
                 typeName: ownColumn.typeName,
                 length: ownColumn.length,

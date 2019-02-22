@@ -116,7 +116,7 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
         if (column.isIdentity) {
             this.write(` IDENTITY(1,1)`);
         }
-        if (column.isRequired) {
+        if (!column.isNullable) {
             this.write(' NOT NULL');
         }
         if (!isLast) {

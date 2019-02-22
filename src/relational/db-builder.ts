@@ -234,7 +234,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         return this.createColumn({
             table: table,       
             role: role || undefined,     
-            sourceProperty: sourceProperty,
+            modelProperty: sourceProperty,
             primaryKeyProperty: primaryKeyProperty || undefined,
             name: name,
             typeName: sqlTypeName,
@@ -242,7 +242,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             precision: this.columnSpecProvider.getPrecision(sqlTypeName, sourceProperty),
             scale: this.columnSpecProvider.getScale(sqlTypeName, sourceProperty),
             isIdentity: !isForeignKey && sourceProperty.isID,
-            isRequired: !sourceProperty.isOptional() || sourceProperty.isID,
+            isNullable: sourceProperty.isOptional() && !sourceProperty.isID,
             isForeignKey: isForeignKey,
             isNavigableInModel: isNavigable
         }, sourceProperty);

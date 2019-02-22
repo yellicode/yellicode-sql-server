@@ -225,7 +225,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
             typeName: sqlTypeName,
             isForeignKey: false,
             isIdentity: false,
-            isRequired: true,
+            isNullable: false,
             isNavigableInModel: false,
             length: this.columnSpecProvider.getLength(sqlTypeName),
             precision: this.columnSpecProvider.getPrecision(sqlTypeName),
@@ -333,7 +333,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
         // }
 
         //   const primaryTableType = property.owner as elements.Type;
-        const constraintName = this.sqlServerObjectNameProvider.getForeignKeyName(column.sourceProperty!, column.primaryKeyProperty!);
+        const constraintName = this.sqlServerObjectNameProvider.getForeignKeyName(column.modelProperty!, column.primaryKeyProperty!);
         const pkTableType = column.primaryKeyProperty!.owner as elements.Type;
         const pkTableName = this.objectNameProvider.getTableName(pkTableType);
         const pkColumnName = this.getIdentityColumnName(pkTableType);

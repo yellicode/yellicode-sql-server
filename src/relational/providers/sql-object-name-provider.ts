@@ -48,7 +48,7 @@ export class DefaultSqlObjectNameProvider implements SqlObjectNameProvider {
     }
   
     public /* virtual */ getParameterName(columnName: string, isMultiValued: boolean) {        
-        return columnName;        
+        return `@${columnName}`;        
     }   
   
     public getColumnAlias(tableName: string, columnName: string): string {

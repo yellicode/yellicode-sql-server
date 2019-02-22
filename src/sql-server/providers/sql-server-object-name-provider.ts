@@ -105,9 +105,11 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
     }
 
     public getStoredProcNameForQuery(query: SqlServerQuery): string {
-        const type: elements.Type = query.sourceType;
-
-        switch (query.queryType) {
+        const type = query.modelType;
+        if (!type || !type.name) {
+            throw `Cannot create stored procedure name because the query has no model type`;
+        }
+        switch (query.queryType) {            
             case QueryType.Insert:
                 return `Insert${type.name}`;
             case QueryType.Update:

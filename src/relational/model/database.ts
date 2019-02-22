@@ -1,5 +1,16 @@
 import * as elements from '@yellicode/elements';
 
+export interface NamedObject {
+    /**
+     * Gets the name of the object.
+     */
+    name: string;
+    /**
+     * Gets the optional name of the database schema to which the object belongs.
+     */
+    schemaName?: string;
+}
+
 export interface Database<TTable extends Table = Table> {
     /**
      * Includes both tables created from model types as well as junction tables.
@@ -8,8 +19,7 @@ export interface Database<TTable extends Table = Table> {
     tables: TTable[];    
 }
 
-export interface Table<TColumn extends Column = Column> {
-    name: string;
+export interface Table<TColumn extends Column = Column> extends NamedObject {    
     isJunctionTable: boolean;
     ownColumns: TColumn[];  
     /**
@@ -49,10 +59,11 @@ export interface Column {
      * True if this column is the identity column of the owning table.
      */
     isIdentity: boolean;
+    
     /**
      * True if the column allows null values.
      */
-    isRequired: boolean;  
+    isNullable: boolean;  
 
     /**
      * True if this property is a foreign key.  
@@ -63,7 +74,7 @@ export interface Column {
      * The property from which the column was created. This property can be owned by a diffent type than the 
      * table's source type if this is a foreign key column.
      */
-    sourceProperty?: elements.Property;       
+    modelProperty?: elements.Property;       
     
     /**
      * Gets the property that matches  the primary key in case this column is a foreign key. 
@@ -114,10 +125,22 @@ export enum SqlParameterDirection {
  * 
  */
 export interface SqlParameter<TColumn = Column> {
-    name: string;
+    /**
+     * The parameter name (including a '@').
+     */
+    name: string;    
+    // sourceColumn: TColumn | null;
+    modelTypeName: string;
     
-    sourceColumn: TColumn;
-    
+    columnName: string | null;
+
+    tableName: string | null;
+
+    /**
+     * Gets the related model property.
+     */
+    modelProperty: elements.Property | null;
+
     /**
      * The SQL type name of the parameter. By default, this is the same type name as the related column type. 
      */
@@ -143,10 +166,13 @@ export interface SqlParameter<TColumn = Column> {
 
     /**
      * True if this parameter must be used as a filter (as part of a WHERE statement).
+     * This value is only required when generating SQL code. The default value is false.
      */
-    isFilter: boolean;
+    isFilter?: boolean;
 
-    isMultiValued: boolean;
+    isMultiValued?: boolean;
+
+    isIdentity: boolean;
 }
 
 export interface TableAssociationInfo {
@@ -174,26 +200,33 @@ export interface TableAssociationInfo {
     isOneToMany: boolean;
 }
 
+export interface SqlResultSet {
+    /**
+     * Gets the columns in the result set.
+     */
+    columns: SqlResultSetColumn[];
+}
+
 /**
- * Internal interface.
+ * 
  */
-export interface SqlSelectSpecification {
-    /**
-     * E.g. `[MyTable].[MyColumn]`.
-     */
-    selection: string;
-    /**
-     * E.g. 'MyColumn'.
-     */
-    columnName: string;
+export interface SqlResultSetColumn {      
+    sourceColumn: string | null;
+    sourceTable: string | null;
     // entityType: elements.Type;
     // property: elements.Property;
     /**
      * The parent property of property: for example when the path is Employee.Department.Name,
      * property is Name and Department is the parent property.
      */
-    parentColumn: Column | null;
+    parentColumn: string | null;
+    // parentColumn: Column | null;
     isJoined: boolean;
     isForeignKey: boolean;
+    isNullable: boolean;
+    /**
+     * The SQL type name of the column. 
+     */
+    typeName: string | null;
     alias: string | null;
 }

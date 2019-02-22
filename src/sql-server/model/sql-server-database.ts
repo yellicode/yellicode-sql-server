@@ -1,6 +1,6 @@
 import * as elements from '@yellicode/elements';
 
-import { Database, Table, Column, SqlParameter, SqlSelectSpecification } from '../../relational/model/database';
+import { Database, Table, Column, SqlParameter, SqlResultSet, NamedObject } from '../../relational/model/database';
 
 export interface SqlServerDatabase extends Database<SqlServerTable> {
     /**
@@ -71,10 +71,10 @@ export interface SqlServerParameter extends SqlParameter<SqlServerColumn> {
      * Gets the table type in case the parameter is table-valued.
      */
     tableType: SqlServerTable | null;
-
 }
 
 export enum QueryType {
+    Unknown,
     Insert,
     SelectSingle,
     Update,
@@ -83,17 +83,25 @@ export enum QueryType {
 }
 
 export interface SqlServerQuery {    
-    table: SqlServerTable;
+    /**
+     * The related table. This field is only required if a standard CRUD query must be generated.  
+     */
+    relatedTable: SqlServerTable | null;
+    /**
+     * This field is only required if a standard CRUD query must be generated.  
+     */
     queryType: QueryType;
-    sourceType: elements.Type;
+
+    modelType: elements.Type | null;
     parameters: SqlServerParameter[];
     /**
      * Required when QueryType is UpdateRelationship.
      */
     dependentColumn?: SqlServerColumn;
-    selection?: SqlSelectSpecification[];
+    resultSets?: SqlResultSet[];
 }
 
-export interface SqlServerStoredProcedure extends SqlServerQuery {        
-    name: string;        
+export interface SqlServerStoredProcedure extends SqlServerQuery, NamedObject   {        
+      
 }
+
