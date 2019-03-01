@@ -17,9 +17,9 @@ export class TSqlSelectWriter extends TSqlWriterBase {
         selectColumnsFilter?: (value: SqlServerColumn) => boolean) {       
 
         const specificationBuilder = new TSqlResultSetBuilder(this.objectNameProvider, this.logger);
-        const resultSets = specificationBuilder.build(table, selectColumnsFilter);
+        const resultSet = specificationBuilder.build(table, selectColumnsFilter);
         const ownTableName = table.name;
-        const columns = resultSets[0].columns;
+        const columns = resultSet.columns;
 
         // SELECT 
         this.writeLine('SELECT')
@@ -28,10 +28,10 @@ export class TSqlSelectWriter extends TSqlWriterBase {
             const selection = col.sourceTable ? `[${col.sourceTable}].[${col.sourceColumn}]`: `[${col.sourceColumn}]`;
             this.writeIndent();
             this.write(selection);
-            if (col.alias) {                
-                this.write(` AS ${col.alias}`);
+            if (col.name) {                
+                this.write(` AS ${col.name}`);
             }
-            if (index < resultSets.length - 1) this.write(',');
+            if (index < resultSet.columns.length - 1) this.write(',');
             // this.write(`-- ${spec.alias || spec.columnName}`);            
             this.writeEndOfLine();
         })

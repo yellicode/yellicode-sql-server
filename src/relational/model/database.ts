@@ -211,6 +211,11 @@ export interface SqlResultSet {
  * 
  */
 export interface SqlResultSetColumn {      
+    /**
+     * The zero-based column ordinal.
+     */
+    ordinal: number;
+    name?: string;
     sourceColumn: string | null;
     sourceTable: string | null;
     // entityType: elements.Type;
@@ -228,5 +233,6 @@ export interface SqlResultSetColumn {
      * The SQL type name of the column. 
      */
     typeName: string | null;
-    alias: string | null;
+    
+    modelTypeName: string;
 }

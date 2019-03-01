@@ -83,14 +83,14 @@ export class StoredProcedureBuilder {
         const parameters = this.buildParameters(table, parameterOptions);
 
         const specificationBuilder = new TSqlResultSetBuilder(this.objectNameProvider, this.logger);
-        const selection = specificationBuilder.build(table);
+        const resultSet = specificationBuilder.build(table);
         const procedure: SqlServerStoredProcedure = {
             modelType: type,
             queryType: QueryType.SelectSingle,
             name: '',
             relatedTable: table,
             parameters: parameters,
-            resultSets: selection
+            resultSets: [resultSet]
         };
         procedure.name = this.objectNameProvider.getStoredProcNameForQuery(procedure);
        // this.logger.info(`buildSelectById: Procedure ${procedure.name} has ${procedure.parameters.length} parameters.`)

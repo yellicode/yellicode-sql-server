@@ -122,8 +122,8 @@ export class StoredProcedureWriter extends TSqlWriterBase {
             const selection = col.sourceTable ? `[${col.sourceTable}].[${col.sourceColumn}]`: `[${col.sourceColumn}]`;
             this.writeIndent();
             this.write(selection);
-            if (col.alias) {
-                this.write(` AS ${col.alias}`);
+            if (col.name) {
+                this.write(` AS ${col.name}`);
             }
             if (index < columns.length - 1) this.write(',');
             this.writeEndOfLine();

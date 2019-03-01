@@ -1,7 +1,8 @@
+import * as elements from '@yellicode/elements';
+import { Logger } from '@yellicode/core';
 import { SqlResultSet, SqlResultSetColumn } from '../../relational/model/database';
 import { SqlServerObjectNameProvider } from '../providers/sql-server-object-name-provider';
 import { SqlServerTable, SqlServerColumn } from '../model/sql-server-database';
-import { Logger } from '@yellicode/core';
 
 export class TSqlResultSetBuilder {
 
@@ -9,32 +10,37 @@ export class TSqlResultSetBuilder {
 
     }
 
-    private buildSqlResultSet(tableName: string, column: SqlServerColumn, parentColumn: SqlServerColumn | null): SqlResultSet {
+    private buildSqlResultSetColumn(tableName: string, column: SqlServerColumn, parentColumn: SqlServerColumn | null, index: number): SqlResultSetColumn {
         const columnName = column.name;      
+        const property: elements.Property = column.modelProperty!;
 
         const isJoined = parentColumn !== null;
         const resultSetColumn: SqlResultSetColumn = {
-            alias: isJoined ? this.objectNameProvider.getColumnAlias(tableName, columnName) : null,
+            ordinal: index,
+            name: isJoined ? this.objectNameProvider.getColumnAlias(tableName, columnName) : column.name,
             sourceTable: tableName,
             sourceColumn: columnName,
             parentColumn: parentColumn ? parentColumn.name : null,
             isJoined: isJoined,
             isForeignKey: column.isForeignKey,
             isNullable: column.isNullable,
-            typeName: column.typeName
+            typeName: column.typeName,
+            modelTypeName: property.getTypeName()
             // property: property,
             // entityType: property.owner as elements.Type,
             // parentProperty: parentProperty 
         };
 
         // specification.isGeneratedIdentity = false;
-        return {columns: [resultSetColumn]};
+        return resultSetColumn;
     }
 
-    public build(table: SqlServerTable, selectColumnsFilter?: (value: SqlServerColumn) => boolean): SqlResultSet[] {
-        const specifications: SqlResultSet[] = [];        
+    public build(table: SqlServerTable, selectColumnsFilter?: (value: SqlServerColumn) => boolean): SqlResultSet {
+        const specifications: SqlResultSetColumn[] = [];        
 
         // 1) Select own properties
+        let index: number= 0;
+
         table.ownColumns.forEach(ownColumn => {
             if (selectColumnsFilter && (selectColumnsFilter(ownColumn) === false)) {
                 return;
@@ -43,7 +49,7 @@ export class TSqlResultSetBuilder {
             if (!ownColumn.isNavigableInModel) 
                 return; 
 
-            specifications.push(this.buildSqlResultSet(table.name, ownColumn, null));
+            specifications.push(this.buildSqlResultSetColumn(table.name, ownColumn, null, index++));
         });
 
         table.dependentColumns.forEach(dependentColumn => {
@@ -69,7 +75,7 @@ export class TSqlResultSetBuilder {
                 //     return;
                 // }
 
-                specifications.push(this.buildSqlResultSet(tableNameOrAlias, column, dependentColumn));
+                specifications.push(this.buildSqlResultSetColumn(tableNameOrAlias, column, dependentColumn, index++));
             });
         });
         
@@ -92,6 +98,6 @@ export class TSqlResultSetBuilder {
         //     });
         // });      
 
-        return specifications;
+        return {columns: specifications};
     }
 }
