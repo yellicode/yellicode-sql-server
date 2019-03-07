@@ -147,9 +147,9 @@ export interface SqlParameter<TColumn = Column> {
     typeName: string; 
 
     /**
-     * The length is determined by typeName.
+     * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
      */
-    length: string | null;
+    length: number | null;
 
     /**
      * The total number of digits to the left and right of the decimal point to which the parameter value is resolved.
