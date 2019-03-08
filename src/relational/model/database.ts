@@ -40,10 +40,9 @@ export interface Column {
      */
     typeName: string;
     /**
-     * An optional column length (depending on the data type). The length must be 
-     * a string representing a number or the value 'max'.
+     * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
      */
-    length: string | null;
+    length: number | null;    
 
     /**
      * The total number of digits to the left and right of the decimal point to which the column value is resolved.

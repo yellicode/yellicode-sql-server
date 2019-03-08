@@ -12,7 +12,7 @@ export class TSqlParameterWriter extends TSqlWriterBase {
     private writeParameterInternal(
         parameterName: string,
         sqlTypeName: string,
-        length: string | null,
+        length: number | null,
         isNullable: boolean,
         isOutput: boolean,
         isMultiValued: boolean,
@@ -22,7 +22,8 @@ export class TSqlParameterWriter extends TSqlWriterBase {
         this.writeIndent();
         this.write(`@${parameterName} ${sqlTypeName}`);
         if (length) {
-            this.write(`(${length})`);
+            const lengthString = length === -1 ? 'max': length.toString();
+            this.write(`(${lengthString})`);
         }
         if (isNullable && !isMultiValued) {
             this.write(' = NULL');

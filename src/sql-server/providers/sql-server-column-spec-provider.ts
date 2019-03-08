@@ -14,16 +14,16 @@ export interface SqlServerColumnSpecProvider extends SqlColumnSpecProvider {
 }
 
 export class DefaultSqlServerColumnSpecProvider extends DefaultSqlColumnSpecProvider {
-    public /*virtual */ getLength(sqlTypeName: string, property?: elements.Property): string | null {
+    public /*virtual */ getLength(sqlTypeName: string, property?: elements.Property): number | null {
         if (!this.requiresLength(sqlTypeName, property)) {
             return null;
         }
         const isSingleValued = property && !property.isMultivalued();
         // Return a length of 1 for the single-valued none-var... types.
         if (isSingleValued && (sqlTypeName === 'char' || sqlTypeName === 'binary' || sqlTypeName === 'nchar')){
-            return '1';
+            return 1;
         }
-        return 'max';
+        return -1;
     }
 
     protected  /*override */ requiresLength(sqlTypeName: string, property?: elements.Property): boolean {

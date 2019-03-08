@@ -1,14 +1,17 @@
 import * as elements from '@yellicode/elements';
 
 export interface SqlColumnSpecProvider {
-    getLength(sqlTypeName: string, property?: elements.Property): string | null;   
+     /**
+     * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
+     */
+    getLength(sqlTypeName: string, property?: elements.Property): number | null;   
     getPrecision(sqlTypeName: string, property?: elements.Property): number | null;
     getScale(sqlTypeName: string, property?: elements.Property): number | null;
     isRelationship(property: elements.Property): boolean;    
 }
 
 export class DefaultSqlColumnSpecProvider implements SqlColumnSpecProvider {
-    public /*virtual */ getLength(sqlTypeName: string, property?: elements.Property): string | null {
+    public /*virtual */ getLength(sqlTypeName: string, property?: elements.Property): number | null {
        return null;
     }
 
