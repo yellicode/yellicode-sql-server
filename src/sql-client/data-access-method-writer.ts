@@ -154,8 +154,8 @@ export class DataAccessMethodWriter extends DataAccessWriterBase {
             // If there is a model property, map the property name.
             // Otherwise (if the model is reverse engineered from SQL), map from the SQL parameter name
             let csharpName: string;
-            if (p.modelProperty){
-                csharpName = this.objectNameProvider.getMethodParameterName(p.modelProperty.name);
+            if (p.objectProperty){
+                csharpName = this.objectNameProvider.getMethodParameterName(p.objectProperty.name);
                 // Pluralize if multi-valued
                 if (p.isMultiValued) csharpName = `${csharpName}Collection`;
             }
@@ -164,7 +164,7 @@ export class DataAccessMethodWriter extends DataAccessWriterBase {
             const info: CommandParameterInfo = {
                 dbParameter: p,                
                 csharpName: csharpName,
-                csharpTypeName: p.modelTypeName,
+                csharpTypeName: p.objectTypeName,
                 isInput: p.direction === SqlParameterDirection.Input || p.direction === SqlParameterDirection.InputOutput,
                 isOutput: p.direction === SqlParameterDirection.Output || p.direction === SqlParameterDirection.InputOutput,
                 isMany: p.isMultiValued || false

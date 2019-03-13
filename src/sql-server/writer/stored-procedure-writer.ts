@@ -252,7 +252,7 @@ export class StoredProcedureWriter extends TSqlWriterBase {
 
     private writeParameter(param: SqlServerParameter, isLast: boolean): void {
         this.writeIndent();
-        this.write(`@${param.name} ${param.typeName}`);
+        this.write(`@${param.name} ${param.sqlTypeName}`);
         if (param.length) {
             this.write(`(${param.length})`);
         }

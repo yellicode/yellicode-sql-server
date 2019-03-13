@@ -106,7 +106,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         const sortedTables = TableSortUtility.sortByDependency(tablesInternal);
         const tables: TTable[] = [];
         sortedTables.forEach(t => {
-            tables.push(this.createTable(t, t.sourceType));
+            tables.push(this.createTable(t, t.objectType));
         });
 
         return this.createDatabase({ tables: tables }, model, associationMap);
@@ -116,7 +116,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         // Create a map to find the table by type
         const tableByType: Map<elements.Type, Table> = new Map<elements.Type, Table>();
         tables.forEach(t => {
-            if (t.sourceType) { tableByType.set(t.sourceType, t); }
+            if (t.objectType) { tableByType.set(t.objectType, t); }
         });
 
         this.columnRelationships.forEach(r => {
@@ -155,7 +155,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         const tableName = this.objectNameProvider.getTableName(type);
         const table: Table = {
             name: tableName,
-            sourceType: type,
+            objectType: type,
             isJunctionTable: false,
             ownColumns: ownColumns,
             dependentColumns: []
@@ -234,10 +234,10 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         return this.createColumn({
             table: table,       
             role: role || undefined,     
-            modelProperty: sourceProperty,
-            primaryKeyProperty: primaryKeyProperty || undefined,
+            objectProperty: sourceProperty,
+            primaryKeyObjectProperty: primaryKeyProperty || undefined,
             name: name,
-            typeName: sqlTypeName,
+            sqlTypeName: sqlTypeName,
             length: this.columnSpecProvider.getLength(sqlTypeName, sourceProperty),
             precision: this.columnSpecProvider.getPrecision(sqlTypeName, sourceProperty),
             scale: this.columnSpecProvider.getScale(sqlTypeName, sourceProperty),

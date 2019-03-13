@@ -60,7 +60,7 @@ export class TSqlQueryWriter extends TSqlWriterBase {
     
         if (!outputParameter && idColumn) {
             // Just in case there is no output parameter: always create a ID variable in case we need it internally       
-            this.writeLine(`DECLARE @${idParameterName} ${idColumn!.typeName};`);
+            this.writeLine(`DECLARE @${idParameterName} ${idColumn!.sqlTypeName};`);
         }
 
         this.writeLine(`INSERT INTO`);

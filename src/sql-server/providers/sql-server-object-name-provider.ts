@@ -120,7 +120,7 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
                 return `Delete${type.name}ById`;
             case QueryType.UpdateRelationship:
                 const col = query.dependentColumn!;
-                const relationName = col.role || col.table.sourceType!.name;
+                const relationName = col.role || col.table.objectType!.name;
                 return `Update${type.name}${relationName}`;
             default:
                 throw `Unsupported query type '${QueryType[query.queryType]}'`;

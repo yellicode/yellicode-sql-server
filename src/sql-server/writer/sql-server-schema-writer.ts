@@ -96,7 +96,7 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
         // Start with the current indent
         this.writeIndent();
         // Name        
-        this.write(`[${column.name}] [${column.typeName}]`);
+        this.write(`[${column.name}] [${column.sqlTypeName}]`);
         if (column.length) {
             this.write(`(${column.length})`);
         }

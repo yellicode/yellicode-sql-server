@@ -25,7 +25,7 @@ export interface Table<TColumn extends Column = Column> extends NamedObject {
     /**
      * The type from which the table was created. This value is null if the table is a junction table.
      */
-    sourceType: elements.Type | null,
+    objectType: elements.Type | null,
     dependentColumns: TColumn[]
 }
 
@@ -38,7 +38,8 @@ export interface Column {
     /**
      * The SQL type name.
      */
-    typeName: string;
+    sqlTypeName: string;
+
     /**
      * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
      */
@@ -73,12 +74,12 @@ export interface Column {
      * The property from which the column was created. This property can be owned by a diffent type than the 
      * table's source type if this is a foreign key column.
      */
-    modelProperty?: elements.Property;       
+    objectProperty?: elements.Property;       
     
     /**
      * Gets the property that matches  the primary key in case this column is a foreign key. 
      */
-    primaryKeyProperty?: elements.Property;
+    primaryKeyObjectProperty?: elements.Property;
 
     /**
      * The table that owns the column.
@@ -129,7 +130,7 @@ export interface SqlParameter<TColumn = Column> {
      */
     name: string;    
     // sourceColumn: TColumn | null;
-    modelTypeName: string;
+    objectTypeName: string;
     
     columnName: string | null;
 
@@ -138,12 +139,12 @@ export interface SqlParameter<TColumn = Column> {
     /**
      * Gets the related model property.
      */
-    modelProperty: elements.Property | null;
+    objectProperty: elements.Property | null;
 
     /**
      * The SQL type name of the parameter. By default, this is the same type name as the related column type. 
      */
-    typeName: string; 
+    sqlTypeName: string; 
 
     /**
      * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
@@ -231,7 +232,10 @@ export interface SqlResultSetColumn {
     /**
      * The SQL type name of the column. 
      */
-    typeName: string | null;
+    sqlTypeName: string | null;
     
-    modelTypeName: string;
+    /**
+     * The object type name of the column. 
+     */
+    objectTypeName: string;
 }

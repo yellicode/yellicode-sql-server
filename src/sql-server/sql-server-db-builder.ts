@@ -167,7 +167,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
         const storedProcedureBuilder = new StoredProcedureBuilder(this.sqlServerObjectNameProvider, identityTableType, this.logger);
 
         database.tables.forEach(table => {
-            const sourceType = table.sourceType;
+            const sourceType = table.objectType;
             if (!sourceType)
                 return; // no sourceType means a junction table
 
@@ -212,7 +212,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
 
         const table: SqlServerTable = {
             name: tableTypeName,
-            sourceType: type,
+            objectType: type,
             isJunctionTable: false,
             keys: [],
             ownColumns: [],
@@ -222,7 +222,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
         const column: SqlServerColumn = {
             table: table,
             name: columnName,
-            typeName: sqlTypeName,
+            sqlTypeName: sqlTypeName,
             isForeignKey: false,
             isIdentity: false,
             isNullable: false,
@@ -311,10 +311,10 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
                     const fk = this.createForeignKey(col);
                     if (fk) { keys.push(fk) };
                 }
-                if (col.isIdentity && table.sourceType) {
+                if (col.isIdentity && table.objectType) {
                     // TODO: only one column per table may be an IDENTITY column, and a column can be an identity without being a PK.
                     // For now, assume one ID which is also the PK. In the future we could create a stereotype to identify the primary key (or composite key).
-                    const pk = this.createPrimaryKey(col, table.sourceType);
+                    const pk = this.createPrimaryKey(col, table.objectType);
                     keys.push(pk);
                 }
             });
@@ -333,8 +333,8 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
         // }
 
         //   const primaryTableType = property.owner as elements.Type;
-        const constraintName = this.sqlServerObjectNameProvider.getForeignKeyName(column.modelProperty!, column.primaryKeyProperty!);
-        const pkTableType = column.primaryKeyProperty!.owner as elements.Type;
+        const constraintName = this.sqlServerObjectNameProvider.getForeignKeyName(column.objectProperty!, column.primaryKeyObjectProperty!);
+        const pkTableType = column.primaryKeyObjectProperty!.owner as elements.Type;
         const pkTableName = this.objectNameProvider.getTableName(pkTableType);
         const pkColumnName = this.getIdentityColumnName(pkTableType);
 

@@ -12,7 +12,7 @@ export class TSqlResultSetBuilder {
 
     private buildSqlResultSetColumn(tableName: string, column: SqlServerColumn, parentColumn: SqlServerColumn | null, index: number): SqlResultSetColumn {
         const columnName = column.name;      
-        const property: elements.Property = column.modelProperty!;
+        const property: elements.Property = column.objectProperty!;
 
         const isJoined = parentColumn !== null;
         const resultSetColumn: SqlResultSetColumn = {
@@ -24,8 +24,8 @@ export class TSqlResultSetBuilder {
             isJoined: isJoined,
             isForeignKey: column.isForeignKey,
             isNullable: column.isNullable,
-            typeName: column.typeName,
-            modelTypeName: property.getTypeName()
+            sqlTypeName: column.sqlTypeName,
+            objectTypeName: property.getTypeName()
             // property: property,
             // entityType: property.owner as elements.Type,
             // parentProperty: parentProperty 

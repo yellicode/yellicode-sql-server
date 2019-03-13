@@ -42,7 +42,7 @@ export class TSqlParameterWriter extends TSqlWriterBase {
         //throw 'writeParameter is not implemented: todo: how to determine isMultivalued?';
         const parameterName = this.getParameterName(column);
         const isMultivalued = false; // TODO: TEMP!!
-        this.writeParameterInternal(parameterName, column.typeName, column.length, isNullable, isOutput, isMultivalued, isLast);
+        this.writeParameterInternal(parameterName, column.sqlTypeName, column.length, isNullable, isOutput, isMultivalued, isLast);
     }
 
     public writeParameterList(table: SqlServerTable, options: opts.ParameterOptions, filter?: (value: SqlServerColumn) => boolean): void {
