@@ -1,6 +1,6 @@
 import * as elements from '@yellicode/elements';
-import { Database, Table, Column } from '../relational/model/database';
-import { SqlServerDatabase, SqlServerTable, SqlServerColumn, SqlServerKey, SqlServerKeyType, SqlServerStoredProcedure, QueryType } from './model/sql-server-database';
+import { Database, Table, Column, Constraint, ConstraintType, } from '../relational/model/database';
+import { SqlServerDatabase, SqlServerTable, SqlServerColumn, SqlServerStoredProcedure, QueryType } from './model/sql-server-database';
 import { Logger } from '@yellicode/core';
 import { DbBuilder } from '../relational/db-builder';
 import { SqlServerTypeNameProvider } from './providers/sql-server-type-name-provider';
@@ -214,7 +214,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
             name: tableTypeName,
             objectType: type,
             isJunctionTable: false,
-            keys: [],
+            constraints: [],
             ownColumns: [],
             dependentColumns: []
         }
@@ -223,8 +223,10 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
             table: table,
             name: columnName,
             sqlTypeName: sqlTypeName,
-            isForeignKey: false,
+            isPrimaryKey: false,
             isIdentity: false,
+            isForeignKey: false,
+            isReadOnly: false,
             isNullable: false,
             isNavigableInModel: false,
             length: this.columnSpecProvider.getLength(sqlTypeName),
@@ -305,24 +307,24 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
 
     private createKeys(database: SqlServerDatabase): void {
         database.tables.forEach(table => {
-            const keys: SqlServerKey[] = [];
+            const keys: Constraint[] = [];
             table.ownColumns.forEach(col => {
                 if (col.isForeignKey) {
                     const fk = this.createForeignKey(col);
                     if (fk) { keys.push(fk) };
                 }
-                if (col.isIdentity && table.objectType) {
+                if (col.isPrimaryKey && table.objectType) {
                     // TODO: only one column per table may be an IDENTITY column, and a column can be an identity without being a PK.
                     // For now, assume one ID which is also the PK. In the future we could create a stereotype to identify the primary key (or composite key).
                     const pk = this.createPrimaryKey(col, table.objectType);
                     keys.push(pk);
                 }
             });
-            table.keys = keys;
+            table.constraints = keys;
         });
     }
 
-    private createForeignKey(column: SqlServerColumn): SqlServerKey | null {
+    private createForeignKey(column: SqlServerColumn): Constraint | null {
         // let primaryTableType: elements.Type;// = elements.isAssociation(property.owner) ? property.type! : property.owner as elements.Type;
         // if (elements.isAssociation(property.owner)) {
         //     const associationEnds = SqlUtility.resolveAssociationEnds(property.owner, property.type!);
@@ -340,21 +342,23 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
 
         return {
             columnName: column.name,
-            keyType: SqlServerKeyType.Foreign,
+            constraintType: ConstraintType.ForeignKey,
             name: constraintName,
             cascadeOnDelete: false,// TODO: column.sourceProperty!.aggregation === elements.AggregationKind.composite,
+            primaryKeyTableSchema: null, // no schema support
             primaryKeyTableName: pkTableName,
             primaryKeyColumnName: pkColumnName
         }
     }
 
-    private createPrimaryKey(column: SqlServerColumn, type: elements.Type): SqlServerKey {
+    private createPrimaryKey(column: SqlServerColumn, type: elements.Type): Constraint {
         const constraintName = this.sqlServerObjectNameProvider.getPrimaryKeyName(type);
         return {
             columnName: column.name,
-            keyType: SqlServerKeyType.Primary,
+            constraintType: ConstraintType.PrimaryKey,
             name: constraintName,
             cascadeOnDelete: false,
+            primaryKeyTableSchema: null, // FK only
             primaryKeyTableName: null, // FK only
             primaryKeyColumnName: null // FK only
         }

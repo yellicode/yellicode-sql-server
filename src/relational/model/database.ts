@@ -8,8 +8,43 @@ export interface NamedObject {
     /**
      * Gets the optional name of the database schema to which the object belongs.
      */
-    schemaName?: string;
+    schema?: string;
 }
+
+export enum ConstraintType {
+    PrimaryKey,
+    ForeignKey
+}
+
+export interface Constraint {
+    constraintType: ConstraintType;
+
+    /**
+     * Gets the name of the key, e.g. 'FK_Employee_Department' for a foreign key relationship
+     * between Employee and Department, where Department is the primary key base table.
+     */
+    name: string;
+
+    columnName: string;
+
+    /**
+     * If the key is a foreign key, returns the schema name of the primary key table.
+     */
+    primaryKeyTableSchema: string | null;
+
+    /**
+     * If the key is a foreign key, returns the table name of the primary key table.
+     */
+    primaryKeyTableName: string | null;
+
+    /**
+     * If the key is a foreign key, returns the primary key name of the primary key table.
+     */
+    primaryKeyColumnName: string | null;
+
+    cascadeOnDelete: boolean;
+}
+
 
 export interface Database<TTable extends Table = Table> {
     /**
@@ -56,20 +91,31 @@ export interface Column {
     scale: number | null;    
 
     /**
-     * True if this column is the identity column of the owning table.
+     * True if this column is the identity column of the owning table (that is, it contains an auto-incrementing value). 
      */
     isIdentity: boolean;
     
     /**
-     * True if the column allows null values.
-     */
-    isNullable: boolean;  
+     * True if this property is a primary key (that is, it has a constraint that guarantees uniqueness).  
+     */      
+    isPrimaryKey: boolean;    
 
     /**
      * True if this property is a foreign key.  
      */      
     isForeignKey: boolean;    
+
+    /**
+     * True if the column allows null values.
+     */
+    isNullable: boolean;  
+   
     
+    /**
+     * True if the column value is readonly because it is auto-generated.
+     */
+    isReadOnly: boolean;
+
     /**
      * The property from which the column was created. This property can be owned by a diffent type than the 
      * table's source type if this is a foreign key column.
@@ -87,7 +133,7 @@ export interface Column {
     table: Table;    
     
     /**
-     * 
+     * The role of this column in an association.
      */
     role?: string;
 

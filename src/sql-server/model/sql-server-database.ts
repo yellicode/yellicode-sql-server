@@ -1,50 +1,25 @@
 import * as elements from '@yellicode/elements';
 
-import { Database, Table, Column, SqlParameter, SqlResultSet, NamedObject } from '../../relational/model/database';
+import { Database, Table, Column, SqlParameter, SqlResultSet, NamedObject, Constraint } from '../../relational/model/database';
 
 export interface SqlServerDatabase extends Database<SqlServerTable> {
     /**
      * Contains SQL-Server user defined table types.
      */
     tableTypes: SqlServerTable[];
-    
+
     /**
      * Gets all stored procedures in the database model.
      */
     storedProcedures: SqlServerStoredProcedure[];
 }
 
-export enum SqlServerKeyType {
-    Primary,
-    Foreign
-}
-
-export interface SqlServerKey {
-    keyType: SqlServerKeyType;
-
-    /**
-     * Gets the name of the key, e.g. 'FK_Employee_Department' for a foreign key relationship
-     * between Employee and Department, where Department is the primary key base table.
-     */
-    name: string;
-
-    columnName: string;
-
-    /**
-     * If the key is a foreign key, returns the table name of the primary key table.
-     */
-    primaryKeyTableName: string | null;
-
-      /**
-     * If the key is a foreign key, returns the primary key name of the primary key table.
-     */
-    primaryKeyColumnName: string | null;
-    
+export interface SqlServerConstraint extends Constraint {
     cascadeOnDelete: boolean;
 }
 
 export interface SqlServerTable extends Table<SqlServerColumn> {
-    keys: SqlServerKey[]; 
+    constraints: SqlServerConstraint[];
 }
 
 export interface SqlServerColumn extends Column {
@@ -57,10 +32,10 @@ export interface SqlServerParameter extends SqlParameter<SqlServerColumn> {
      */
     isReadOnly: boolean;
 
-     /**
-     * True if the parameter allows NULL values.
-     */
-    isNullable: boolean;  
+    /**
+    * True if the parameter allows NULL values.
+    */
+    isNullable: boolean;
 
     /**
      * True if the parameter is a table valued parameter.
@@ -79,10 +54,10 @@ export enum QueryType {
     SelectSingle,
     Update,
     Delete,
-    UpdateRelationship    
+    UpdateRelationship
 }
 
-export interface SqlServerQuery {    
+export interface SqlServerQuery {
     /**
      * The related table. This field is only required if a standard CRUD query must be generated.  
      */
@@ -101,7 +76,7 @@ export interface SqlServerQuery {
     resultSets?: SqlResultSet[];
 }
 
-export interface SqlServerStoredProcedure extends SqlServerQuery, NamedObject   {        
-      
+export interface SqlServerStoredProcedure extends SqlServerQuery, NamedObject {
+
 }
 

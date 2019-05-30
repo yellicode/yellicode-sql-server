@@ -1,9 +1,10 @@
 import { TextWriter } from "@yellicode/templating";
 import * as opts from '../options';
 import { TSqlWriterBase } from './t-sql-writer-base';
-import { SqlServerTable, SqlServerColumn, SqlServerKeyType, SqlServerKey, SqlServerStoredProcedure } from '../model/sql-server-database';
+import { SqlServerTable, SqlServerColumn, SqlServerConstraint, SqlServerStoredProcedure } from '../model/sql-server-database';
 import { StoredProcedureWriter } from './stored-procedure-writer';
 import { Logger } from '@yellicode/core';
+import { ConstraintType } from '../../relational/model/database';
 
 export class SqlServerSchemaWriter extends TSqlWriterBase {
     private storedProcedureWriter: StoredProcedureWriter;
@@ -37,7 +38,7 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
     public writeTableDefinition(table: SqlServerTable, options?: opts.TableOptions): void {
         if (!options) options = {};
 
-        const hasConstraints = table.keys && table.keys.length > 0;
+        const hasConstraints = table.constraints && table.constraints.length > 0;
         const features = (options.features === undefined) ? opts.TableFeatures.All : options.features;
         const writeConstraints = hasConstraints && (features & opts.TableFeatures.ForeignKeyConstraints) ? true : false;
 
@@ -54,7 +55,7 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
             })
 
             if (writeConstraints) {
-                this.writeKeys(table.keys);
+                this.writeKeys(table.constraints);
             };
         });
     }
@@ -125,17 +126,17 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
         this.writeEndOfLine();
     }
 
-    private writeKeys(keys: SqlServerKey[]): void {
+    private writeKeys(keys: SqlServerConstraint[]): void {
         keys.forEach((key, index) => {
             this.writeIndent();
-            switch (key.keyType) {
-                case SqlServerKeyType.Foreign:
+            switch (key.constraintType) {
+                case ConstraintType.ForeignKey:
                     this.write(`CONSTRAINT [${key.name}] FOREIGN KEY (${key.columnName}) REFERENCES [${key.primaryKeyTableName}] ([${key.primaryKeyColumnName}])`);
                     if (key.cascadeOnDelete) {
                         this.write(' ON DELETE CASCADE');
                     }
                     break;
-                case SqlServerKeyType.Primary:
+                case ConstraintType.PrimaryKey:
                     this.write(`CONSTRAINT [${key.name}] PRIMARY KEY CLUSTERED ([${key.columnName}])`);
                     break;
             }

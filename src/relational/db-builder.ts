@@ -230,7 +230,9 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         // If there is a referencesProperty, this property is the PK, and the PK determines the sql server column type of a FK
         const propertyForSqlTypeName = isForeignKey && primaryKeyProperty ? primaryKeyProperty : sourceProperty;
         const sqlTypeName = this.getSqlTypeName(propertyForSqlTypeName);
-        
+        const isPrimaryKey = !isForeignKey && sourceProperty.isID;
+        const isIdentity = isPrimaryKey; // make the PK column also the Identity column
+
         return this.createColumn({
             table: table,       
             role: role || undefined,     
@@ -241,9 +243,11 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             length: this.columnSpecProvider.getLength(sqlTypeName, sourceProperty),
             precision: this.columnSpecProvider.getPrecision(sqlTypeName, sourceProperty),
             scale: this.columnSpecProvider.getScale(sqlTypeName, sourceProperty),
-            isIdentity: !isForeignKey && sourceProperty.isID,
+            isReadOnly: isIdentity,
             isNullable: sourceProperty.isOptional() && !sourceProperty.isID,
+            isPrimaryKey: isPrimaryKey,
             isForeignKey: isForeignKey,
+            isIdentity: isIdentity,
             isNavigableInModel: isNavigable
         }, sourceProperty);
     }
