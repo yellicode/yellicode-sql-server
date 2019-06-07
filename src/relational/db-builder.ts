@@ -244,6 +244,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             precision: this.columnSpecProvider.getPrecision(sqlTypeName, sourceProperty),
             scale: this.columnSpecProvider.getScale(sqlTypeName, sourceProperty),
             isReadOnly: isIdentity,
+            hasDefaultValue: false,
             isNullable: sourceProperty.isOptional() && !sourceProperty.isID,
             isPrimaryKey: isPrimaryKey,
             isForeignKey: isForeignKey,

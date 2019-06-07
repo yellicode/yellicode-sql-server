@@ -99,7 +99,7 @@ export class StoredProcedureBuilder {
 
     private buildUpdateRelationShipById(table: SqlServerTable, dependentColumn: SqlServerColumn): void {
      
-        const idParameter = this.buildIdParameter(table);
+        const idParameter = this.buildIdParameter(table, 0);
         if (!idParameter) {
             this.logger.warn(`Cannot build procedure because the identity column of table '${table.name}' could not be determined.`);
             return;
@@ -115,7 +115,7 @@ export class StoredProcedureBuilder {
             return;
         }
 
-        const idListParameter = this.buildIdListParameter(idColumn);
+        const idListParameter = this.buildIdListParameter(idColumn, 1);
         parameters.push(idListParameter);
 
 
@@ -142,12 +142,13 @@ export class StoredProcedureBuilder {
         this.addToResult(procedure);
     }
 
-    private buildIdListParameter(relatedColumn: SqlServerColumn): SqlServerParameter {
+    private buildIdListParameter(relatedColumn: SqlServerColumn, index: number): SqlServerParameter {
         const identityType = this.identityTableType.objectType!;
         
         const tableTypeName = this.objectNameProvider.getSimpleTableTypeName(identityType, relatedColumn.sqlTypeName)
         return {
             name: this.objectNameProvider.getParameterName(relatedColumn.name, true),
+            index: index,
             tableType: this.identityTableType,            
             sqlTypeName: tableTypeName,            
             tableName: null,
@@ -177,12 +178,13 @@ export class StoredProcedureBuilder {
         })
     }
 
-    private buildIdParameter(table: SqlServerTable): SqlServerParameter | null {
+    private buildIdParameter(table: SqlServerTable, index: number): SqlServerParameter | null {
         const idColumn = table.ownColumns.find(c => c.isIdentity);
         if (!idColumn || !idColumn.objectProperty) return null;
         const p: SqlServerParameter = 
          {
             name: this.objectNameProvider.getParameterName(idColumn.name, false),            
+            index: index,
             objectProperty: idColumn.objectProperty,
             objectTypeName: idColumn.objectProperty.type!.getQualifiedName(),
             tableName: table.name,      
@@ -212,8 +214,9 @@ export class StoredProcedureBuilder {
         const dependentColumns: SqlServerColumn[] = [];// StoredProcedureBuilder.filterColumns(table.dependentColumns, includes, filter);
 
         const parameters: SqlServerParameter[] = [];
+        let paramIndex = 0;
 
-        ownColumns.forEach((ownColumn, index) => {
+        ownColumns.forEach((ownColumn) => {
             if (ownColumn.isMany) {
                 this.logger.verbose(`Not creating parameter for column '${table.name}.${ownColumn.name}' because the column is the foreign key in a one-to-many relationship .`);
                 return; 
@@ -230,6 +233,7 @@ export class StoredProcedureBuilder {
 
             const ownParameter: SqlServerParameter = {
                 name: this.objectNameProvider.getParameterName(ownColumn.name, false),                
+                index: paramIndex++,
                 tableName: ownColumn.table.name, 
                 columnName: ownColumn.name,
                 objectTypeName: modelProperty.type.getQualifiedName(),

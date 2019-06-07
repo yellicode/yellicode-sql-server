@@ -109,12 +109,16 @@ export interface Column {
      * True if the column allows null values.
      */
     isNullable: boolean;  
-   
-    
+       
     /**
      * True if the column value is readonly because it is auto-generated.
      */
     isReadOnly: boolean;
+
+    /**
+     * True if the column value has a default value.
+     */
+    hasDefaultValue: boolean;
 
     /**
      * The property from which the column was created. This property can be owned by a diffent type than the 
@@ -174,8 +178,11 @@ export interface SqlParameter<TColumn = Column> {
     /**
      * The parameter name (including a '@').
      */
-    name: string;    
-    // sourceColumn: TColumn | null;
+    name: string;  
+    /**
+     * The 0-based index position of the parameter in a parameter collection.
+     */  
+    index: number;
     objectTypeName: string;
     
     columnName: string | null;

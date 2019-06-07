@@ -227,6 +227,7 @@ export class SqlServerDbBuilder extends DbBuilder<SqlServerDatabase, SqlServerTa
             isIdentity: false,
             isForeignKey: false,
             isReadOnly: false,
+            hasDefaultValue: false,
             isNullable: false,
             isNavigableInModel: false,
             length: this.columnSpecProvider.getLength(sqlTypeName),
