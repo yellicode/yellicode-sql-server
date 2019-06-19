@@ -258,6 +258,10 @@ export interface SqlResultSet {
      * Gets the columns in the result set.
      */
     columns: SqlResultSetColumn[];
+     /**
+     * True if result set contains no more than 1 record.
+     */
+    hasSingleRecord?: boolean;
 }
 
 /**
