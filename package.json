@@ -1,6 +1,6 @@
 {
   "name": "@yellicode/sql-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "SQL Server extension for Yellicode - an extensible code generator.",
   "keywords": [
     "code generator",
