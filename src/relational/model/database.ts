@@ -198,6 +198,11 @@ export interface SqlParameter<TColumn = Column> {
      * The SQL type name of the parameter. By default, this is the same type name as the related column type. 
      */
     sqlTypeName: string; 
+    
+    /**
+    * The schema of the SQL type  of the parameter. This only applies if the type is a table type.
+    */
+    sqlTypeSchema: string | null; 
 
     /**
      * The maximum size, in bytes, of the data within the column. Set to -1 to specifify a maximum length.
