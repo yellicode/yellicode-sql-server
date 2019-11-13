@@ -1,6 +1,4 @@
 import * as elements from '@yellicode/elements';
-import { NameUtility } from '@yellicode/templating';
-import { SqlUtility } from '../utils/sql-utility';
 
 export interface SqlObjectNameProvider {
 

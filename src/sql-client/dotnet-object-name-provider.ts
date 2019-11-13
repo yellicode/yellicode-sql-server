@@ -1,5 +1,5 @@
 import * as elements from '@yellicode/elements';
-import { NameUtility } from '@yellicode/templating';
+import { NameUtility } from '@yellicode/core';
 import { SqlServerStoredProcedure, SqlServerTable } from '../sql-server';
 
 export interface DotNetObjectNameProvider {

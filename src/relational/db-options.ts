@@ -1,4 +1,4 @@
-import { TypeNameProvider } from '@yellicode/templating';
+import { TypeNameProvider } from '@yellicode/elements';
 import { SqlObjectNameProvider } from './providers/sql-object-name-provider';
 import { SqlColumnSpecProvider } from './providers/sql-column-spec-provider';
 

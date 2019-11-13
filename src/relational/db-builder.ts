@@ -1,6 +1,6 @@
 import * as elements from '@yellicode/elements';
 import { Logger, ConsoleLogger } from '@yellicode/core';
-import { TypeNameProvider } from '@yellicode/templating';
+import { TypeNameProvider } from '@yellicode/elements';
 import { Database, Table, Column } from './model/database';
 import { TypeAssociationInfo } from './model/type-association-info';
 import { TypeAssociationMapBuilder } from './type-association-map-builder';

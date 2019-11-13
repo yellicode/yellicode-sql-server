@@ -18,10 +18,10 @@
     "url": "github:yellicode/yellicode-sql-server.git"
   },
   "dependencies": {
-    "@yellicode/csharp": "^1.7.2",
-    "@yellicode/dotnet-profile": "^1.0.1",
-    "@yellicode/elements": "^1.1.1",
-    "@yellicode/templating": "^1.5.1",
+    "@yellicode/core": "^1.2.1",
+    "@yellicode/csharp": "^1.9.0",
+    "@yellicode/dotnet-profile": "^1.1.0",
+    "@yellicode/elements": "^1.2.2",
     "toposort": "^2.0.2"
   },
   "devDependencies": {

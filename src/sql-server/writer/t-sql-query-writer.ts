@@ -1,5 +1,5 @@
 import * as elements from '@yellicode/elements';
-import { TextWriter } from '@yellicode/templating';
+import { TextWriter } from '@yellicode/core';
 import { TSqlSelectWriter } from './t-sql-select-writer';
 import { TSqlWriterBase } from './t-sql-writer-base';
 import { SqlServerTable, SqlServerColumn } from '../model/sql-server-database';

@@ -1,6 +1,6 @@
 import { CSharpWriter } from "@yellicode/csharp";
 import * as elements from '@yellicode/elements';
-import { NameUtility } from '@yellicode/templating';
+import { NameUtility } from '@yellicode/core';
 import { DataAccessWriterBase } from './data-access-writer-base';
 import { DataRecordMethodMapper } from './data-record-method-mapper';
 import { DataRecordSpecification } from './data-record-specification';

@@ -1,5 +1,5 @@
 import * as elements from '@yellicode/elements';
-import { DefaultTypeNameProvider } from "@yellicode/templating";
+import { DefaultTypeNameProvider } from "@yellicode/elements";
 import { SqlUtility } from '../utils/sql-utility';
 
 export class AnsiSqlTypeNameProvider extends DefaultTypeNameProvider {

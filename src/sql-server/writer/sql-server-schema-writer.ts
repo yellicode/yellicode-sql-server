@@ -1,4 +1,4 @@
-import { TextWriter } from "@yellicode/templating";
+import { TextWriter } from "@yellicode/core";
 import * as opts from '../options';
 import { TSqlWriterBase } from './t-sql-writer-base';
 import { SqlServerTable, SqlServerColumn, SqlServerConstraint, SqlServerStoredProcedure } from '../model/sql-server-database';

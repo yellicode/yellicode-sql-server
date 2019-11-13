@@ -1,5 +1,5 @@
-import { CodeWriter, TextWriter, TypeNameProvider } from '@yellicode/templating';
-import { SqlServerTable, SqlServerColumn } from '../model/sql-server-database';
+import { CodeWriter, TextWriter } from '@yellicode/core';
+import { SqlServerColumn } from '../model/sql-server-database';
 
 import { Logger, ConsoleLogger } from '@yellicode/core';
 

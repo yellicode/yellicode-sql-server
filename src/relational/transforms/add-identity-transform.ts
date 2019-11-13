@@ -1,5 +1,5 @@
 import * as elements from "@yellicode/elements";
-import { PackagedElementTransform } from '@yellicode/templating';
+import { PackagedElementTransform } from '@yellicode/elements';
 
 export interface AddIdentityTransformOptions {
     /**

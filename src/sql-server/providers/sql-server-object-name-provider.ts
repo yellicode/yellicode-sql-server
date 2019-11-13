@@ -1,7 +1,7 @@
 import * as elements from '@yellicode/elements';
-import { NameUtility } from '@yellicode/templating';
+import { NameUtility } from '@yellicode/core';
 import { SqlObjectNameProvider, DefaultSqlObjectNameProvider } from '../../relational/providers/sql-object-name-provider';
-import { SqlServerTable, SqlServerQuery, QueryType } from '../model/sql-server-database';
+import { SqlServerQuery, QueryType } from '../model/sql-server-database';
 
 export interface SqlServerObjectNameProvider extends SqlObjectNameProvider {
 
