@@ -28,7 +28,7 @@ export class SqlServerTypeNameProvider extends AnsiSqlTypeNameProvider {
             if (elements.isPrimitiveReal(type)) return 'real';
             if (elements.isPrimitiveString(type)) return 'nvarchar';
             if (elements.isPrimitiveObject(type)) return 'varbinary';
-            return super.getDataTypeNameForType(type);
+            return super.getTypeNameForType(type, isDataType);
         }
         else {
             // The type is a complex type (FK). We should return the type of the identity of the principal entity.

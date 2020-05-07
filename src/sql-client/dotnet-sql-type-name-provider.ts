@@ -45,57 +45,54 @@ export class DotNetSqlTypeNameProvider extends SqlServerTypeNameProvider {
             return 'smallint';
         }
         else if (dotnet.isObject(type)) {
-            return 'varbinary'; // well, you should probably override this to match your needs 
+            return 'varbinary'; // well, you should probably override this to match your needs
         }
         return null;
     }
 
-    protected /*override*/ getDataTypeNameForType(type: elements.Type): string | null {
-        var typeName = this.getDataTypeNameForDotNetType(type, false);
-        // The super class maps built-in primitives
-        return typeName ? typeName: super.getDataTypeNameForType(type);        
-    }
-   
-    protected /*override*/ getDataTypeName(typedElement: elements.TypedElement): string | null {
-        if (!typedElement.type) return null;
-
-        const isMultiValued = elements.isMultiplicityElement(typedElement) && typedElement.isMultivalued();
-        const typeName = this.getDataTypeNameForDotNetType(typedElement.type!, isMultiValued);
-        // The super class maps built-in primitives
-        return typeName ? typeName: super.getDataTypeName(typedElement);
+    protected getTypeNameForType(type: elements.Type | null, isDataType: boolean): string | null {
+        if (type && isDataType) {
+            var typeName = this.getDataTypeNameForDotNetType(type, false);
+            if (typeName) return typeName;
+        }
+        return super.getTypeNameForType(type, isDataType);
     }
 
-    private static isMultiValued(typedElement: elements.TypedElement) {
-        return (elements.isMultiplicityElement(typedElement)) && typedElement.isMultivalued();
+    protected /*override*/ getTypeNameForTypedElement(typedElement: elements.TypedElement, isDataType: boolean, isMultiValued: boolean): string | null {
+        if (isDataType && typedElement.type) {
+            const typeName = this.getDataTypeNameForDotNetType(typedElement.type!, isMultiValued);
+            if (typeName) return typeName;
+        }
+        return super.getTypeNameForTypedElement(typedElement, isDataType, isMultiValued);
     }
 
     public static canBeNullable(type: elements.Type): boolean {
         if (!type || type.name == null)
-            return false;  
+            return false;
 
         if (elements.isPrimitiveString(type) || dotnet.isString(type) ||
             elements.isPrimitiveObject(type) || dotnet.isObject(type) ){
             return false; // type is already nullable
-        }      
+        }
 
-        return elements.isEnumeration(type) || elements.isDataType(type); // isDataType includes PrimitiveType      
+        return elements.isEnumeration(type) || elements.isDataType(type); // isDataType includes PrimitiveType
     }
 
     /**
      * Returns true if variables and properties of the type can be assigned a null value,
-     * even when not made nullable.     
+     * even when not made nullable.
      */
     public static canHaveNullValue(type: elements.Type): boolean {
         if (!type || type.name == null)
-            return false;  
+            return false;
 
-        if (elements.isPrimitiveString(type) || dotnet.isString(type) || 
-            elements.isPrimitiveObject(type) || dotnet.isObject(type)            
+        if (elements.isPrimitiveString(type) || dotnet.isString(type) ||
+            elements.isPrimitiveObject(type) || dotnet.isObject(type)
         ){
-            return true; 
+            return true;
         }
 
         // Is the type a complex type?
-        return !elements.isDataType(type); 
+        return !elements.isDataType(type);
     }
 }
