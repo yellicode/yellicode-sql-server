@@ -16,8 +16,8 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
     }
 
     /**
-    * Writes a CREATE DATABASE statement that creates a new database and drops the existing one if is exits 
-    * (this disabled trough the options parameter). 
+    * Writes a CREATE DATABASE statement that creates a new database and drops the existing one if is exits
+    * (this disabled trough the options parameter).
     */
     public writeDatabaseDefinition(databaseName: string, options?: opts.DatabaseOptions): void {
         if (!options) options = {};
@@ -96,10 +96,10 @@ export class SqlServerSchemaWriter extends TSqlWriterBase {
 
         // Start with the current indent
         this.writeIndent();
-        // Name        
+        // Name
         this.write(`[${column.name}] [${column.sqlTypeName}]`);
         if (column.length) {
-            this.write(`(${column.length})`);
+            this.write(`(${column.length === -1 ? 'max' : column.length})`);
         }
         else {
             if (column.precision || column.scale) {
