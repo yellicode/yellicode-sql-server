@@ -11,27 +11,27 @@ export interface SqlServerObjectNameProvider extends SqlObjectNameProvider {
     getPrimaryKeyName(type: elements.Type): string;
 
     /**
-    * Returns the name for the foreign key constraint that corresponds to the provided dependent property. 
+    * Returns the name for the foreign key constraint that corresponds to the provided dependent property.
     * The default is 'FK_${dependentTypeName}_${principalTypeName}'.
     */
     getForeignKeyName(foreignKeyProperty: elements.Property, primaryKeyProperty: elements.Property): string;
 
      /**
      * Returns the name for a user-defined table type that corresponds to the provided type. The default is '${type.name}Table', where
-     * type.name is written in UpperCamelCase.   
+     * type.name is written in UpperCamelCase.
      * @param sqlTypeName The sql type name for the type. This name is provided by the current TypeNameProvider.
      */
     getComplexTableTypeName(type: elements.Type): string;
 
     /**
-     * Returns the name for a single-column user-defined table type that corresponds to the provided type. 
-     * The default is '${sqlTypeName}Table', where sqlTypeName is written in UpperCamelCase.   
+     * Returns the name for a single-column user-defined table type that corresponds to the provided type.
+     * The default is '${sqlTypeName}Table', where sqlTypeName is written in UpperCamelCase.
      * @param sqlTypeName The sql type name for the type. This name is provided by the current TypeNameProvider.
      */
     getSimpleTableTypeName(type: elements.Type, sqlTypeName: string): string;
 
     /**
-     * Returns the column name for the single column of a simple user defined table type (where the single column matches the 
+     * Returns the column name for the single column of a simple user defined table type (where the single column matches the
      * specified type). The default value is 'Value'.
      * @param sqlTypeName The sql type name of the only column of the user defined table type.
      */
@@ -39,7 +39,7 @@ export interface SqlServerObjectNameProvider extends SqlObjectNameProvider {
 
 
     //   /**
-    //  * Returns the type name for a parameter that corresponds to the sql type.     
+    //  * Returns the type name for a parameter that corresponds to the sql type.
     //  */
     // getParameterTypeName(sqlTypeName: string, isMultiValued: boolean): string;
 
@@ -56,7 +56,7 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
     }
 
     public /* virtual */ getForeignKeyName(foreignKeyProperty: elements.Property, primaryKeyProperty: elements.Property): string {
-        // const principalTypeName: string = foreignKeyProperty.name || foreignKeyProperty.getTypeName();       
+        // const principalTypeName: string = foreignKeyProperty.name || foreignKeyProperty.getTypeName();
         // const owner = foreignKeyProperty.owner;
         // let dependentTypeName: string;
 
@@ -69,15 +69,16 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
         //     dependentTypeName = associationEnds ? associationEnds.entityEnd.getTypeName() : '';
         // }
         // else {
-        //     // The property is owned by a type.            
+        //     // The property is owned by a type.
         //     dependentTypeName = (foreignKeyProperty.owner as elements.NamedElement).name;
         // }
-        
+
         // Try to be as specific as possible with the dependent name, if there is a property name, use it
         // (if not, the foreignKeyProperty is owned by an association and therefore has no name)
-        const dependentName: string = foreignKeyProperty.name || foreignKeyProperty.getTypeName();
-        const dependsOnType = primaryKeyProperty.owner as elements.Type;        
-        return `FK_${dependsOnType.name}_${dependentName}`;
+        const primaryKeyTypeName: string = foreignKeyProperty.name || foreignKeyProperty.getTypeName();
+        // const foreignKeyType = primaryKeyProperty.owner as elements.Type;
+        const foreignKeyType = (foreignKeyProperty.owner as elements.NamedElement).name;
+        return `FK_${foreignKeyType}_${primaryKeyTypeName}`;
     }
 
     public /*virtual*/ getSimpleTableTypeName(type: elements.Type, sqlTypeName: string): string {
@@ -88,18 +89,18 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
         return `TT_${type.name}`;
     }
 
-    public /* override */ getParameterName(columnName: string, isMultiValued: boolean) {        
+    public /* override */ getParameterName(columnName: string, isMultiValued: boolean) {
         // If multi valued, a table type is used
         return isMultiValued ? `${columnName}Table`: columnName;
-    }   
-    
+    }
+
     // public getParameterTypeName(sqlTypeName: string, isMultiValued: boolean): string {
     //     if (isMultiValued) {
     //         return this.getSimpleTableTypeName(sqlTypeName);
     //     }
     //     else return sqlTypeName;
     // }
-        
+
     public getSimpleTableTypeColumnName(sqlTypeName: string): string {
         return 'Value';
     }
@@ -109,7 +110,7 @@ export class DefaultSqlServerObjectNameProvider extends DefaultSqlObjectNameProv
         if (!type || !type.name) {
             throw `Cannot create stored procedure name because the query has no model type`;
         }
-        switch (query.queryType) {            
+        switch (query.queryType) {
             case QueryType.Insert:
                 return `Insert${type.name}`;
             case QueryType.Update:

@@ -44,7 +44,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
      * Adds a filter expression that filters out the types from which the builder should create tables.
      * You can add multiple filters by calling this function multiple times, the filters will be applied
      * in the order in which you call them.
-     * @param predicate A function that returns true if a table should be created for the given type. 
+     * @param predicate A function that returns true if a table should be created for the given type.
      */
     public addTableFilter(predicate: (type: elements.Type) => boolean): this {
         this.tableFilters.push(predicate);
@@ -78,7 +78,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             .addNonAssociationRelations(model) // Get other relationships and treat them as associations too
             .getMap();
 
-        // DbBuilder.logAssociations(associationMap); // TEMP                
+        // DbBuilder.logAssociations(associationMap); // TEMP
 
         const tablesInternal: Table[] = [];
         // Build tables from types in the model
@@ -86,7 +86,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         types.forEach(t => {
             if (!this.shouldCreateTableForType(t))
                 return;
-           
+
             const table: Table | null = this.buildTableDefinitionFromType(t, associationMap);
             if (table) {
                 this.logger.verbose(`Created table '${table.name}' from type '${t.name}'.`);
@@ -100,9 +100,9 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         this.resolveColumnRelationships(tablesInternal);
         this.columnRelationships.length = 0; // clear the array
 
-        // Sort tables, avoiding issues when creating FK's. Do this after resolveColumnRelationships()! Note that we do not 
-        // build a dependency graph on the underlying object model itself because the dependencies might run in a different direction 
-        // in the relational model. 
+        // Sort tables, avoiding issues when creating FK's. Do this after resolveColumnRelationships()! Note that we do not
+        // build a dependency graph on the underlying object model itself because the dependencies might run in a different direction
+        // in the relational model.
         const sortedTables = TableSortUtility.sortByDependency(tablesInternal);
         const tables: TTable[] = [];
         sortedTables.forEach(t => {
@@ -165,48 +165,53 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             type.ownedAttributes.forEach(property => {
                 const isForeignKey = property.owner == type && this.columnSpecProvider.isRelationship(property);
                 if (isForeignKey && property.isMultivalued()) {
-                    // The property is a member of a 1-to-M or M-to-M relationship. 
+                    // The property is a member of a 1-to-M or M-to-M relationship.
                     // The FK column should be on the other table (1-to-M) or in a join table (M-to-M).
-                    // This is handled through the associationMap on the other type.            
+                    // This is handled through the associationMap on the other type.
                     //  this.logger.verbose(`Not creating a column for property '${type.name}.${property.name}' on table '${tableName}' because it is multivalued.`);
                     return null;
                 }
                 else {
                     const column = this.buildColumnDefinitionFromProperty(table, type, property, tableName, isForeignKey);
-                    if (column) { ownColumns.push(column) };
+                    if (column) {
+                        ownColumns.push(column);
+                        if (isForeignKey && property.type) {
+                            this.columnRelationships.push({ column: column, primaryKeyType: property.type });
+                        }
+                    };
                 };
             });
         }
 
-        // Write column definitions from 1-M relationships: e.g. (Department [1] - Employee [1..*]), and this is the Employee table, 
+        // Write column definitions from 1-M relationships: e.g. (Department [1] - Employee [1..*]), and this is the Employee table,
         // give the Employee table a DepartmentId.
         const associations = associationMap.get(type);
         if (associations) {
             associations.forEach(a => {
                 // If the property owned by a type (and not by the association), skip column generation
-                // because the column will already be there (e.g. entityEnd is a property Department on Employee)                  
+                // because the column will already be there (e.g. entityEnd is a property Department on Employee)
                 if (a.fromPropertyIsOwnedByType)
                     return;
 
                 // Is this a 1-to-M relationship, meaning: does the opposite end allow multiple instances of type and does the type
-                // only allow one instance of the opposite type)?                
+                // only allow one instance of the opposite type)?
                 if (!a.isOneToMany)
                     return;
 
-                // Get the column name. Note that we cannot call this.getColumnName(entityEnd), because property won't have a no name (otherwise it would 
+                // Get the column name. Note that we cannot call this.getColumnName(entityEnd), because property won't have a no name (otherwise it would
                 // be a property - fromPropertyIsOwnedByType - and already be handled).
                 const idProperty = SqlUtility.findIdentityProperty(a.fromType);
                 if (!idProperty) {
                     throw `Could not create FK property for type '${a.fromType.name}' on table '${tableName}' because the type's identity property could not be determined.`;
                 }
                 // E.g. DepartmentId
-                // Get a column name for the association property first. 
+                // Get a column name for the association property first.
                 const idColName = this.objectNameProvider.getColumnName(idProperty);
                 const role = this.objectNameProvider.getColumnName(a.fromProperty); // result can be empty if the association end is unnamed
-                const colName = role ? `${idColName}_${role}`: idColName;                
+                const colName = role ? `${idColName}_${role}`: idColName;
 
-                this.logger.verbose(`Adding column '${type.name}.${colName}' due to a 1-M relationship '${a.fromType.name}.${a.fromProperty.name}' where ${type.name} has no navigable attribute for ${a.fromType.name}.`);                
-                
+                this.logger.verbose(`Adding column '${type.name}.${colName}' due to a 1-M relationship '${a.fromType.name}.${a.fromProperty.name}' where ${type.name} has no navigable attribute for ${a.fromType.name}.`);
+
                 const column = this.buildColumnDefinition(table, role, a.fromProperty, idProperty, colName, true, false);
                 if (column) {
                     column.isMany = true;
@@ -220,7 +225,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
     }
 
     private buildColumnDefinition(
-        table: Table,        
+        table: Table,
         role: string | null,
         sourceProperty: elements.Property,
         primaryKeyProperty: elements.Property | null,
@@ -234,8 +239,8 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
         const isIdentity = isPrimaryKey; // make the PK column also the Identity column
 
         return this.createColumn({
-            table: table,       
-            role: role || undefined,     
+            table: table,
+            role: role || undefined,
             objectProperty: sourceProperty,
             primaryKeyObjectProperty: primaryKeyProperty || undefined,
             name: name,
@@ -258,18 +263,19 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             this.logger.warn(`Cannot create a column definition from property '${sourceType.name}.${property.id}' on table '${tableName}' because the property has no name.`);
             return null;
         }
+
         const colName = isForeignKey ? this.objectNameProvider.getForeignKeyColumnName(property) : this.objectNameProvider.getColumnName(property);
         let primaryKeyProperty: elements.Property | null;
         if (isForeignKey && property.type) {
             primaryKeyProperty = SqlUtility.findIdentityProperty(property.type);
         }
-        else primaryKeyProperty = null;        
+        else primaryKeyProperty = null;
 
         return this.buildColumnDefinition(table, null, property, primaryKeyProperty, colName, isForeignKey, true);
     }
 
     /**
-   * Uses the current typeNameProvider to get the sql type name for the specified type.     
+   * Uses the current typeNameProvider to get the sql type name for the specified type.
    */
     protected getSqlTypeName(typedElement: elements.TypedElement): string {
         let typeName = this.typeNameProvider.getTypeName(typedElement);
@@ -293,7 +299,7 @@ export class DbBuilder<TDatabase extends Database<TTable>, TTable extends Table<
             console.log('');
             console.log(`Associations to type '${key.name}':`);
             value.forEach(v => {
-                // 
+                //
                 const fromPropertyName = v.fromProperty.name || '[unnamed property]';
                 const toPropertyName = v.toProperty ? v.toProperty.name || '[unnamed property]' : '[no property]';
                 console.log(`     From '${v.fromType.name}.${fromPropertyName}' to '${v.toType.name}.${toPropertyName}' (1-M: ${v.isOneToMany})`);
