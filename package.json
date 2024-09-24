@@ -25,7 +25,7 @@
     "toposort": "^2.0.2"
   },
   "devDependencies": {
-    "rollup": "^0.66.6"
+    "rollup": "^3.29.5"
   },
   "scripts": {
     "build:es5": "tsc",
